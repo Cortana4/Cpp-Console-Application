@@ -1,0 +1,49 @@
+name: CI Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: ['Debug', 'Release']
+        platform: ['x86', 'x64']
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Checkout vcpkg
+      uses: actions/checkout@v4
+      with:
+        repository: microsoft/vcpkg
+        path: vcpkg
+
+    - name: Setup vcpkg
+      run: |
+        cd vcpkg
+        ./bootstrap-vcpkg.bat
+        ./vcpkg integrate install
+
+    - name: Invoke Developer Command Prompt for VS
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Build
+      run: msbuild /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.platform }}-${{ matrix.configuration }}
+        path: bin/${{ matrix.platform == 'x86' && 'Win32' || matrix.platform }}/${{ matrix.configuration }}
