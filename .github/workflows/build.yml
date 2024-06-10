@@ -18,23 +18,25 @@ jobs:
         configuration: ['Debug', 'Release']
         platform: ['x86', 'x64']
 
+    env:
+      VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
         submodules: false
 
-    - name: Checkout vcpkg
-      uses: actions/checkout@v4
-      with:
-        repository: microsoft/vcpkg
-        path: vcpkg
-
     - name: Setup vcpkg
-      run: |
-        cd vcpkg
-        ./bootstrap-vcpkg.bat
-        ./vcpkg integrate install
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 6f1ddd6b6878e7e66fcc35c65ba1d8feec2e01f8
+        vcpkgDirectory: ${{ github.workspace }}/vcpkg
+        doNotCache: false
+        runVcpkgInstall: false
+
+    - name: Run vcpkg integrate install
+      run: ${{ github.workspace }}/vcpkg/vcpkg integrate install
 
     - name: Invoke Developer Command Prompt for VS
       uses: ilammy/msvc-dev-cmd@v1
